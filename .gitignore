@@ -1,0 +1,32 @@
+# Byte-code files
+*.pyc
+*.pyo
+__pycache__
+
+# Distribution / packaging
+.Python
+build/
+dist/
+wheels/
+*.egg-info/
+.tox/
+
+# Environments
+.env
+venv/
+.venv/
+
+# Editors and IDEs
+.vscode/
+.idea/
+
+# Downloaded files
+# Add patterns for your default output directory or specific downloaded files
+# Example:
+# output.mp4
+# *.mp4
+# downloaded_videos/
+
+# Fathom downloader specific
+# Ignore the default output file if not using --output-name and OUTPUT_DIR is not set
+output.mp4
