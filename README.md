@@ -1,6 +1,10 @@
-# Fathom Video Downloader
+# Video Downloaders for Fathom and BoxCast
 
-This script allows you to download videos from Fathom using the m3u8 playlist URL. It provides a progress indicator based on the number of video chunks being downloaded.
+This repository contains two scripts for downloading videos:
+- `fathom.py` - Downloads videos from Fathom
+- `boxcast.py` - Downloads videos from BoxCast
+
+Both scripts use ffmpeg and provide progress indicators during download.
 
 ## Prerequisites
 
@@ -52,7 +56,9 @@ It is recommended to use a virtual environment to manage the project's dependenc
     ```
     Replace `/path/to/your/output/directory` with the desired path. If the `OUTPUT_DIR` is not specified in the `.env` file, the script will save the video in the current directory.
 
-2.  **Run the script:**
+### Fathom Videos
+
+2.  **Run the Fathom script:**
 
     ```bash
     python fathom.py <fathom_base_url> [--output-name <video_name>]
@@ -69,26 +75,58 @@ It is recommended to use a virtual environment to manage the project's dependenc
 
     This will download the video and save it as `AMA with Chris.mp4` in the specified `OUTPUT_DIR` (or the current directory if `OUTPUT_DIR` is not set).
 
+### BoxCast Videos
+
+3.  **Get the m3u8 URL from BoxCast:**
+    
+    BoxCast videos require you to extract the m3u8 URL manually due to expiring signed URLs:
+    
+    1. Open the BoxCast page in Chrome
+    2. Open Chrome Developer Tools (F12)
+    3. Go to the Network tab
+    4. Click play on the video
+    5. Filter by "m3u8" in the Network tab
+    6. Look for URLs containing `240p-byteranges.m3u8` (recommended for faster downloads)
+    7. Copy the full URL including all parameters
+
+4.  **Run the BoxCast script:**
+
     ```bash
-    python fathom.py https://fathom.video/share/z9R_xcgWVJhQsfQEagyA3toiGbeUtuHj
+    python boxcast.py "<m3u8_url>" [--output-name <video_name>]
     ```
-    This will download the video and save it using the video ID as the filename.
+
+    **Example:**
+
+    ```bash
+    python boxcast.py "https://play.boxcast.com/p/zvvyzetbuprcu7anat5a/r/361.259s/8876.08s/v/240p-byteranges.m3u8?Expires=1753315200&Signature=..." --output-name "2025-07-14 City Council"
+    ```
+
+    **Note:** BoxCast URLs expire quickly, so you'll need to get a fresh URL each time. The 240p version downloads much faster and is sufficient quality for most meeting videos.
 
 ## How it works
 
-The script performs the following steps:
+### Fathom Script (`fathom.py`)
 
 1.  Loads environment variables from the `.env` file.
 2.  Parses command-line arguments using `argparse`.
-3.  Constructs the full m3u8 URL.
+3.  Constructs the full m3u8 URL by appending `/video.m3u8`.
 4.  Fetches the content of the m3u8 playlist file.
 5.  Parses the m3u8 content to get a list of video chunk URLs and counts the total number of chunks.
-6.  Determines the output filename based on the provided `--output-name` or the video ID.
-7.  Determines the output directory from the `OUTPUT_DIR` environment variable or uses the current directory.
-8.  Creates the output directory if it doesn't exist.
-9.  Constructs the full output path for the video file.
-10. Executes the `ffmpeg` command to download the video using the m3u8 URL.
-11. Captures the stderr output from `ffmpeg` in real-time.
-12. Parses the stderr output to identify when each video chunk is being read.
-13. Displays a progress indicator showing the number of chunks downloaded out of the total.
-14. Reports the download completion or any errors encountered during the process.
+6.  Uses `ffmpeg` to download the video with progress tracking based on chunk count.
+
+### BoxCast Script (`boxcast.py`)
+
+1.  Loads environment variables from the `.env` file.
+2.  Parses command-line arguments using `argparse`.
+3.  Detects if the URL is already an m3u8 URL or a BoxCast embed page.
+4.  For embed pages, attempts to extract the m3u8 URL from the page content.
+5.  For direct m3u8 URLs, uses them directly.
+6.  Uses `ffmpeg` to download the video with progress tracking based on time elapsed.
+7.  Provides better error messages for expired URLs.
+
+Both scripts:
+- Determine the output filename based on the provided `--output-name` or extract an ID from the URL.
+- Use the `OUTPUT_DIR` environment variable or current directory for output location.
+- Create the output directory if it doesn't exist.
+- Display progress indicators during download.
+- Report completion or errors encountered during the process.
