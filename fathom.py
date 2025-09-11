@@ -103,6 +103,10 @@ if __name__ == "__main__":
     fathom_url = args.fathom_url
     output_name = args.output_name
 
+    # Clean the URL - remove any query parameters like ?tab=summary
+    if "?" in fathom_url:
+        fathom_url = fathom_url.split("?")[0]
+    
     # Append "/video.m3u8" to the URL
     fathom_url_with_m3u8 = fathom_url.rstrip("/") + "/video.m3u8"
 
