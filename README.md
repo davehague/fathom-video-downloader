@@ -1,10 +1,11 @@
-# Video Downloaders for Fathom and BoxCast
+# Video Downloaders
 
-This repository contains two scripts for downloading videos:
+This repository contains scripts for downloading videos from various platforms:
 - `fathom.py` - Downloads videos from Fathom
 - `boxcast.py` - Downloads videos from BoxCast
+- `vimeo.py` - Downloads private/unlisted Vimeo videos that require authentication
 
-Both scripts use ffmpeg and provide progress indicators during download.
+All scripts use ffmpeg and provide progress indicators during download.
 
 ## Prerequisites
 
@@ -13,6 +14,10 @@ Both scripts use ffmpeg and provide progress indicators during download.
 - `requests` and `python-dotenv` Python packages. You can install them using pip:
   ```bash
   pip install requests python-dotenv
+  ```
+- For Vimeo downloads, `curl_cffi` is also required:
+  ```bash
+  pip install 'yt-dlp[curl-cffi]'
   ```
 
 ## Installation
@@ -103,6 +108,41 @@ It is recommended to use a virtual environment to manage the project's dependenc
 
     **Note:** BoxCast URLs expire quickly, so you'll need to get a fresh URL each time. The 240p version downloads much faster and is sufficient quality for most meeting videos.
 
+### Vimeo Videos
+
+Vimeo videos that are private or unlisted (URLs like `vimeo.com/123456/abc123`) often fail with yt-dlp showing "The web client only works when logged-in". This script works around that by using the signed config URL from your browser.
+
+5.  **Get the config URL from Vimeo:**
+
+    1. Open the Vimeo video page in Chrome
+    2. Open Chrome Developer Tools (F12 or Cmd+Option+I)
+    3. Go to the Network tab
+    4. Click play on the video
+    5. Filter by "config"
+    6. Look for a request with **Type: xhr** to `player.vimeo.com/video/XXXXX/config?...`
+    7. Right-click > Copy > Copy URL
+    8. The URL will have a `&s=` signature parameter at the end
+
+6.  **Run the Vimeo script:**
+
+    ```bash
+    python vimeo.py "<config_url>" --output-name "<video_name>" [--audio-only]
+    ```
+
+    **Examples:**
+
+    Download as video (MP4):
+    ```bash
+    python vimeo.py "https://player.vimeo.com/video/835563352/config?h=abc123&...&s=signature" --output-name "My Video"
+    ```
+
+    Download as audio only (MP3):
+    ```bash
+    python vimeo.py "https://player.vimeo.com/video/835563352/config?h=abc123&...&s=signature" --output-name "My Audio" --audio-only
+    ```
+
+    **Note:** Config URLs contain a signature that expires, so you'll need to get a fresh URL each time.
+
 ## How it works
 
 ### Fathom Script (`fathom.py`)
@@ -124,7 +164,16 @@ It is recommended to use a virtual environment to manage the project's dependenc
 6.  Uses `ffmpeg` to download the video with progress tracking based on time elapsed.
 7.  Provides better error messages for expired URLs.
 
-Both scripts:
+### Vimeo Script (`vimeo.py`)
+
+1.  Loads environment variables from the `.env` file.
+2.  Parses command-line arguments using `argparse`.
+3.  Fetches the signed config URL using `curl_cffi` with browser impersonation.
+4.  Extracts the HLS stream URL from the config JSON response.
+5.  Uses `ffmpeg` to download the video or audio from the HLS stream.
+6.  Supports audio-only downloads (converts to MP3).
+
+All scripts:
 - Determine the output filename based on the provided `--output-name` or extract an ID from the URL.
 - Use the `OUTPUT_DIR` environment variable or current directory for output location.
 - Create the output directory if it doesn't exist.
