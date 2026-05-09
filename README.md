@@ -4,6 +4,7 @@ This repository contains scripts for downloading videos from various platforms:
 - `fathom.py` - Downloads videos from Fathom
 - `boxcast.py` - Downloads videos from BoxCast
 - `vimeo.py` - Downloads private/unlisted Vimeo videos that require authentication
+- `streamyard.py` - Downloads recordings of public StreamYard webinars
 
 All scripts use ffmpeg and provide progress indicators during download.
 
@@ -143,6 +144,29 @@ Vimeo videos that are private or unlisted (URLs like `vimeo.com/123456/abc123`) 
 
     **Note:** Config URLs contain a signature that expires, so you'll need to get a fresh URL each time.
 
+### StreamYard Videos
+
+StreamYard publishes webinar recordings as direct signed MP4s. The script just needs the public watch URL — no DevTools work required.
+
+7.  **Run the StreamYard script:**
+
+    ```bash
+    python streamyard.py "<streamyard_watch_url>" [--output-name <video_name>]
+    ```
+
+    -   `<streamyard_watch_url>`: A StreamYard watch URL (e.g., `https://streamyard.com/watch/D3bdxzyuQKMH`). Bare webinar IDs are also accepted. Query parameters are ignored.
+    -   `--output-name <video_name>` (Optional): Custom name for the output file (without extension). Defaults to the webinar's title.
+
+    **Example:**
+
+    ```bash
+    python streamyard.py "https://streamyard.com/watch/D3bdxzyuQKMH" --output-name "Q&A Ideabrowser"
+    ```
+
+    **Notes:**
+    -   Only works for webinars where the host has VOD (recording playback) enabled and hasn't deleted the media.
+    -   Webinars that require email registration are not currently supported — the script will tell you if it hits one.
+
 ## How it works
 
 ### Fathom Script (`fathom.py`)
@@ -172,6 +196,14 @@ Vimeo videos that are private or unlisted (URLs like `vimeo.com/123456/abc123`) 
 4.  Extracts the HLS stream URL from the config JSON response.
 5.  Uses `ffmpeg` to download the video or audio from the HLS stream.
 6.  Supports audio-only downloads (converts to MP3).
+
+### StreamYard Script (`streamyard.py`)
+
+1.  Loads environment variables from the `.env` file.
+2.  Parses the webinar ID out of the provided watch URL.
+3.  Loads the watch page once to obtain a `jwtOnAir` session cookie that StreamYard's public API requires.
+4.  Calls `https://oa-api.streamyard.com/api/public/webinars/{id}` (with the `x-csrf-protection: true` header) to retrieve the webinar metadata, including a signed `vodUrl`.
+5.  Streams the MP4 directly to disk with a progress indicator. No `ffmpeg` involved.
 
 All scripts:
 - Determine the output filename based on the provided `--output-name` or extract an ID from the URL.
