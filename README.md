@@ -83,6 +83,16 @@ It is recommended to use a virtual environment to manage the project's dependenc
 
 ### BoxCast Videos
 
+**City of Worthington meetings, by date (no dev tools needed):**
+
+```bash
+python boxcast.py --body arb --date 2026-09-24 --output-name "2026-09-24 Worthington ARB MPC"
+```
+
+`--body` is `council`, `arb` or `bza`. `--height` picks the rendition (default 720; 240, 480, 720 and 1080 exist). The script looks the meeting up through the same unauthenticated endpoints the embedded player uses. If the city has not yet trimmed the pre-meeting lead-in off the recording it says so; the download is then the full recording and its timestamps will run later than the posted video.
+
+**Any other BoxCast video, by URL:**
+
 3.  **Get the m3u8 URL from BoxCast:**
     
     BoxCast videos require you to extract the m3u8 URL manually due to expiring signed URLs:
